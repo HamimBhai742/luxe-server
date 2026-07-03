@@ -30,3 +30,8 @@ export interface TResetPasswordInput {
   password: string;
 }
 
+export interface TGoogleLoginInput {
+  idToken?: string;
+  accessToken?: string;
+}
+

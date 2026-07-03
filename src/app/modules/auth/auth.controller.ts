@@ -85,6 +85,20 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const googleLogin = catchAsync(async (req: Request, res: Response) => {
+  const { idToken, accessToken } = req.body;
+  if (!idToken && !accessToken) {
+    throw new AppError("Google idToken or accessToken is required.", 400);
+  }
+  const result = await AuthService.googleLogin({ idToken, accessToken });
+  res.status(200).json({
+    success: true,
+    message: result.message,
+    accessToken: result.accessToken,
+    data: result.user,
+  });
+});
+
 export const AuthController = {
   signup,
   verifyAccount,
@@ -92,5 +106,6 @@ export const AuthController = {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  googleLogin,
 };
 export default AuthController;

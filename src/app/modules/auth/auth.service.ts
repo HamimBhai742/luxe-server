@@ -12,6 +12,7 @@ import type {
   TForgotPasswordInput,
   TVerifyOtpInput,
   TResetPasswordInput,
+  TGoogleLoginInput,
 } from "./auth.interface.js";
 
 // Helper to generate JWT token
@@ -134,6 +135,10 @@ const login = async (payload: TLoginInput) => {
     throw new AppError("Please verify your email address first before logging in.", 403);
   }
 
+  if (!user.password) {
+    throw new AppError("This account uses social login. Please log in using Google.", 400);
+  }
+
   const isPasswordValid = await bcryptjs.compare(payload.password, user.password);
   if (!isPasswordValid) {
     throw new AppError("Invalid email or password.", 400);
@@ -251,6 +256,98 @@ const resetPassword = async (payload: TResetPasswordInput) => {
   };
 };
 
+const googleLogin = async (payload: TGoogleLoginInput) => {
+  const { idToken, accessToken } = payload;
+  if (!idToken && !accessToken) {
+    throw new AppError("Google Access Token or ID Token is required.", 400);
+  }
+
+  let email: string | undefined;
+  let name: string | undefined;
+
+  if (idToken) {
+    try {
+      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+      if (!response.ok) {
+        throw new AppError("Invalid Google ID Token.", 401);
+      }
+      const data = (await response.json()) as any;
+
+      if (!data.email) {
+        throw new AppError("Email not returned by Google.", 400);
+      }
+
+      if (config.googleClientId && data.aud !== config.googleClientId) {
+        throw new AppError("Invalid token audience.", 401);
+      }
+
+      email = data.email;
+      name = data.name || data.email.split("@")[0];
+    } catch (error: any) {
+      throw new AppError(error.message || "Google ID Token verification failed.", 401);
+    }
+  } else if (accessToken) {
+    try {
+      const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (!response.ok) {
+        throw new AppError("Invalid Google Access Token.", 401);
+      }
+      const data = (await response.json()) as any;
+
+      if (!data.email) {
+        throw new AppError("Email not returned by Google.", 400);
+      }
+
+      email = data.email;
+      name = data.name || data.email.split("@")[0];
+    } catch (error: any) {
+      throw new AppError(error.message || "Google Access Token verification failed.", 401);
+    }
+  }
+
+  if (!email) {
+    throw new AppError("Failed to retrieve user email from Google.", 400);
+  }
+
+  let user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email,
+        name: name || "Google User",
+        password: null as any,
+        isVerified: true,
+      },
+    });
+  } else if (!user.isVerified) {
+    user = await prisma.user.update({
+      where: { email },
+      data: {
+        isVerified: true,
+      },
+    });
+  }
+
+  const newAccessToken = createToken(user.id, user.email);
+
+  return {
+    message: "Login successful.",
+    accessToken: newAccessToken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    },
+  };
+};
+
 export const AuthService = {
   signup,
   verifyAccount,
@@ -258,4 +355,5 @@ export const AuthService = {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  googleLogin,
 };

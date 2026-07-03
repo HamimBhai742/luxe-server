@@ -23,6 +23,7 @@ export const config = {
     pass: getEnvVar("SMTP_PASS", false, ""),
     from: getEnvVar("SMTP_FROM", false, "mdhamim5088@gmail.com"),
   },
+  googleClientId: getEnvVar("GOOGLE_CLIENT_ID", false, ""),
 } as const;
 
 export type Config = typeof config;
