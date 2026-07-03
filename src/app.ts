@@ -5,6 +5,7 @@ import morgan from "morgan";
 import config from "./app/config/index.js";
 import notFoundHandler from "./app/middlewares/notFoundHandler.js";
 import errorHandler from "./app/middlewares/errorHandler.js";
+import { router } from "./app/routes/index.js";
 
 const app = express();
 
@@ -28,6 +29,8 @@ app.use(express.urlencoded({ extended: true }));
 if (config.nodeEnv !== "test") {
   app.use(morgan(config.nodeEnv === "development" ? "dev" : "combined"));
 }
+
+app.use('/api/v1',router)
 
 // Health check endpoint
 app.get("/health", (req, res) => {
