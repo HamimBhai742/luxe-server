@@ -3,6 +3,7 @@ model User {
   email      String    @unique
   name       String
   password   String?
+  role       String    @default("user")
   isVerified Boolean   @default(false)
   otp        String?
   otpExpiry  DateTime?

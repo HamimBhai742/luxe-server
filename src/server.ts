@@ -2,6 +2,7 @@ import http from "node:http";
 import app from "./app.js";
 import config from "./app/config/index.js";
 import prisma from "./app/db/prisma.js";
+import { seedAdmin } from "./app/db/seed.js";
 
 const server = http.createServer(app);
 
@@ -12,7 +13,10 @@ const startServer = async () => {
     await prisma.$connect();
     console.log("Database connection established successfully.");
 
-    // 2. Start HTTP server
+    // 2. Seed admin user if configured
+    await seedAdmin();
+
+    // 3. Start HTTP server
     server.listen(config.port, () => {
       console.log(`[Server] running in [${config.nodeEnv}] mode on port ${config.port}`);
     });

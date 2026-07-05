@@ -24,6 +24,10 @@ export const config = {
     from: getEnvVar("SMTP_FROM", false, "mdhamim5088@gmail.com"),
   },
   googleClientId: getEnvVar("GOOGLE_CLIENT_ID", false, ""),
+  admin: {
+    email: getEnvVar("ADMIN_EMAIL", false, "admin@gmail.com"),
+    password: getEnvVar("ADMIN_PASSWORD", false, "Hamim@742"),
+  },
 } as const;
 
 export type Config = typeof config;

@@ -153,6 +153,7 @@ const login = async (payload: TLoginInput) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
     },
   };
 };
@@ -344,6 +345,7 @@ const googleLogin = async (payload: TGoogleLoginInput) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
     },
   };
 };
