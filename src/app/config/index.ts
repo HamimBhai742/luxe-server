@@ -28,6 +28,11 @@ export const config = {
     email: getEnvVar("ADMIN_EMAIL", false, "admin@gmail.com"),
     password: getEnvVar("ADMIN_PASSWORD", false, "Hamim@742"),
   },
+  cloudinary: {
+    cloudName: getEnvVar("CLOUDINARY_CLOUD_NAME", false),
+    apiKey: getEnvVar("CLOUDINARY_API_KEY", false),
+    apiSecret: getEnvVar("CLOUDINARY_API_SECRET", false),
+  },
 } as const;
 
 export type Config = typeof config;

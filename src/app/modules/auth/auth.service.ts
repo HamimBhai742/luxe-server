@@ -131,6 +131,14 @@ const login = async (payload: TLoginInput) => {
     throw new AppError("Invalid email or password.", 400);
   }
 
+  if (user.status === "Suspended") {
+    throw new AppError("Your account has been suspended. Please contact support.", 403);
+  }
+
+  if (user.status === "Pending") {
+    throw new AppError("Your account registration is pending approval or verification.", 403);
+  }
+
   if (!user.isVerified) {
     throw new AppError("Please verify your email address first before logging in.", 403);
   }
@@ -334,6 +342,14 @@ const googleLogin = async (payload: TGoogleLoginInput) => {
         isVerified: true,
       },
     });
+  }
+
+  if (user.status === "Suspended") {
+    throw new AppError("Your account has been suspended. Please contact support.", 403);
+  }
+
+  if (user.status === "Pending") {
+    throw new AppError("Your account registration is pending approval or verification.", 403);
   }
 
   const newAccessToken = createToken(user.id, user.email);

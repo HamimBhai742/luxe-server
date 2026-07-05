@@ -1,11 +1,17 @@
-// Define your Product-related models here
-// Example:
-// model Product {
-//   id          String   @id @default(uuid())
-//   name        String
-//   description String?
-//   price       Float
-//   stock       Int      @default(0)
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-// }
+model Product {
+  id             String   @id @default(uuid())
+  name           String
+  description    String
+  category       String
+  brand          String?
+  sku            String   @unique
+  barcode        String?
+  inventoryType  String   @default("tracked") // "tracked" | "untracked"
+  inventoryCount Int      @default(0)
+  price          Float
+  originalPrice  Float?
+  image          String
+  status         String   @default("Published") // "Published" | "Draft" | "Out of Stock"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

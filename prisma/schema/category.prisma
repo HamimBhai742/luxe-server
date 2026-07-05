@@ -1,0 +1,13 @@
+model Category {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  slug          String   @unique
+  parent        String   @default("--")
+  productsCount Int      @default(0)
+  status        String   @default("Active") // "Active" | "Draft" | "Archived"
+  visWeb        Boolean  @default(true)
+  visMobile     Boolean  @default(true)
+  iconType      String   @default("other") // "electronics" | "laptops" | "clothing" | "other"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

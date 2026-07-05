@@ -4,6 +4,7 @@ model User {
   name       String
   password   String?
   role       String    @default("user")
+  status     String    @default("Active") // "Active" | "Pending" | "Suspended"
   isVerified Boolean   @default(false)
   otp        String?
   otpExpiry  DateTime?
