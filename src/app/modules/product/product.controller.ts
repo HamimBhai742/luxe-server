@@ -307,6 +307,26 @@ const getCloudinaryPublicId = (imageUrl: string): string | null => {
   return cleanPublicId.replace(/\.[^/.]+$/, "");
 };
 
+const getSingleProduct = catchAsync(async (req: Request, res: Response): Promise<void> => {
+  const id = req.params.id as string;
+  const product = await prisma.product.findUnique({
+    where: { id: id },
+  });
+
+  if (!product) {
+    res.status(404).json({
+      success: false,
+      message: "Product not found",
+    });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    data: product,
+  });
+});
+
 const deleteProduct = catchAsync(async (req: Request, res: Response): Promise<void> => {
   const id = req.params.id as string;
 
@@ -352,6 +372,7 @@ const deleteProduct = catchAsync(async (req: Request, res: Response): Promise<vo
 export const ProductController = {
   createProduct,
   getAllProducts,
+  getSingleProduct,
   updateProduct,
   deleteProduct,
 };
