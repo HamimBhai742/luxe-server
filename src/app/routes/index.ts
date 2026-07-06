@@ -5,6 +5,7 @@ import { UploadRoutes } from "../modules/upload/upload.routes.js";
 import { CategoryRoutes } from "../modules/category/category.routes.js";
 import { UserRoutes } from "../modules/user/user.routes.js";
 import { CouponRoutes } from "../modules/coupon/coupon.routes.js";
+import { OrderRoutes } from "../modules/order/order.routes.js";
 
 export const router = Router();
 
@@ -32,6 +33,10 @@ const routes = [
   {
     path: "/coupons",
     route: CouponRoutes,
+  },
+  {
+    path: "/orders",
+    route: OrderRoutes,
   },
 ];
 

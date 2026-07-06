@@ -1,0 +1,12 @@
+model Order {
+  id                String   @id @default(uuid())
+  orderId           String   @unique
+  date              String   // Readable date string e.g. "Oct 24, 2024"
+  customerName      String
+  customerEmail     String
+  total             Float
+  paymentStatus     String   @default("Pending") // "Paid" | "Pending" | "Refunded"
+  fulfillmentStatus String   @default("Processing") // "Shipped" | "Processing" | "Delivered" | "Canceled" | "Returned"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
