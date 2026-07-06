@@ -7,6 +7,8 @@ import { UserRoutes } from "../modules/user/user.routes.js";
 import { CouponRoutes } from "../modules/coupon/coupon.routes.js";
 import { OrderRoutes } from "../modules/order/order.routes.js";
 import { TransactionRoutes } from "../modules/transaction/transaction.routes.js";
+import { WishlistRoutes } from "../modules/wishlist/wishlist.routes.js";
+import { CartRoutes } from "../modules/cart/cart.routes.js";
 
 export const router = Router();
 
@@ -42,6 +44,14 @@ const routes = [
   {
     path: "/transactions",
     route: TransactionRoutes,
+  },
+  {
+    path: "/wishlist",
+    route: WishlistRoutes,
+  },
+  {
+    path: "/cart",
+    route: CartRoutes,
   },
 ];
 
