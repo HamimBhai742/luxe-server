@@ -164,9 +164,75 @@ const deleteCoupon = catchAsync(async (req: Request, res: Response): Promise<voi
   });
 });
 
+const validateCoupon = catchAsync(async (req: Request, res: Response): Promise<void> => {
+  const { code } = req.body;
+
+  if (!code || code.trim() === "") {
+    res.status(400).json({
+      success: false,
+      message: "Coupon code is required.",
+    });
+    return;
+  }
+
+  const coupon = await prisma.coupon.findUnique({
+    where: { code: code.trim().toUpperCase() },
+  });
+
+  if (!coupon) {
+    res.status(400).json({
+      success: false,
+      message: "Coupon code not found.",
+    });
+    return;
+  }
+
+  if (coupon.status !== "Active") {
+    res.status(400).json({
+      success: false,
+      message: "Coupon code is inactive.",
+    });
+    return;
+  }
+
+  // Check usage thresholds
+  if (coupon.usageMax !== -1 && coupon.usageUsed >= coupon.usageMax) {
+    res.status(400).json({
+      success: false,
+      message: "Coupon code has reached its maximum usage limit.",
+    });
+    return;
+  }
+
+  // Check expiry
+  if (coupon.expiryDate && coupon.expiryDate !== "Never") {
+    const expiry = new Date(coupon.expiryDate);
+    const now = new Date();
+    if (expiry.getTime() < now.getTime()) {
+      res.status(400).json({
+        success: false,
+        message: "Coupon code has expired.",
+      });
+      return;
+    }
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Coupon applied successfully",
+    data: {
+      id: coupon.id,
+      code: coupon.code,
+      type: coupon.type,
+      value: coupon.value,
+    },
+  });
+});
+
 export const CouponController = {
   createCoupon,
   getAllCoupons,
   updateCoupon,
   deleteCoupon,
+  validateCoupon,
 };
