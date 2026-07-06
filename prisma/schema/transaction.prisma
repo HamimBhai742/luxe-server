@@ -1,0 +1,14 @@
+model Transaction {
+  id            String   @id @default(uuid())
+  transactionId String   @unique // e.g. #TRX-98234
+  date          String   // e.g. "Oct 24, 2023"
+  time          String   // e.g. "14:32 PM"
+  customerName  String
+  customerEmail String
+  customerAvatar String?
+  amount        Float
+  status        String   @default("Pending") // "Succeeded" | "Pending" | "Failed" | "Refunded"
+  method        String   @default("Stripe")  // "Stripe" | "Wire Transfer" | "Credit Card" | "bKash"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
