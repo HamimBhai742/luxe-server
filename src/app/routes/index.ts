@@ -9,6 +9,7 @@ import { OrderRoutes } from "../modules/order/order.routes.js";
 import { TransactionRoutes } from "../modules/transaction/transaction.routes.js";
 import { WishlistRoutes } from "../modules/wishlist/wishlist.routes.js";
 import { CartRoutes } from "../modules/cart/cart.routes.js";
+import { PaymentRoutes } from "../modules/payment/payment.routes.js";
 
 export const router = Router();
 
@@ -52,6 +53,10 @@ const routes = [
   {
     path: "/cart",
     route: CartRoutes,
+  },
+  {
+    path: "/payments",
+    route: PaymentRoutes,
   },
 ];
 
