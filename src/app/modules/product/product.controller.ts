@@ -23,6 +23,7 @@ const createProduct = catchAsync(async (req: Request, res: Response): Promise<vo
     originalPrice,
     status,
     image,
+    images,
     description,
     brand,
   } = req.body;
@@ -105,6 +106,7 @@ const createProduct = catchAsync(async (req: Request, res: Response): Promise<vo
       originalPrice: parsedOriginalPrice,
       status: status || "Published",
       image: image.trim(),
+      images: images && Array.isArray(images) ? images.map((img: any) => String(img).trim()) : [image.trim()],
       description: description.trim(),
       brand: brand ? brand.trim() : null,
     },
@@ -141,6 +143,7 @@ const updateProduct = catchAsync(async (req: Request, res: Response): Promise<vo
     originalPrice,
     status,
     image,
+    images,
     description,
     brand,
   } = req.body;
@@ -213,7 +216,52 @@ const updateProduct = catchAsync(async (req: Request, res: Response): Promise<vo
     return;
   }
 
-  // Update Product in Database
+  // 1. Fetch current product from db to compare images
+  const currentProduct = await prisma.product.findUnique({
+    where: { id: id },
+  });
+  if (!currentProduct) {
+    res.status(404).json({
+      success: false,
+      message: "Product not found",
+    });
+    return;
+  }
+
+  // 2. Identify images to delete (present in current db entry, but not in new list)
+  const oldImages: string[] = [];
+  if (currentProduct.image) oldImages.push(currentProduct.image);
+  if (currentProduct.images && Array.isArray(currentProduct.images)) {
+    currentProduct.images.forEach((img: string) => {
+      if (!oldImages.includes(img)) oldImages.push(img);
+    });
+  }
+
+  const newImagesList: string[] = [];
+  if (image) newImagesList.push(image.trim());
+  if (images && Array.isArray(images)) {
+    images.forEach((img: any) => {
+      const cleanImg = String(img).trim();
+      if (!newImagesList.includes(cleanImg)) newImagesList.push(cleanImg);
+    });
+  }
+
+  const imagesToDelete = oldImages.filter(img => !newImagesList.includes(img));
+
+  // 3. Delete replaced images from Cloudinary
+  for (const imgUrl of imagesToDelete) {
+    const publicId = getCloudinaryPublicId(imgUrl);
+    if (publicId) {
+      try {
+        console.log(`Replacing/Removing image: Deleting "${publicId}" from Cloudinary...`);
+        await cloudinary.uploader.destroy(publicId);
+      } catch (cloudinaryError) {
+        console.error(`Failed to delete replaced image "${publicId}" from Cloudinary:`, cloudinaryError);
+      }
+    }
+  }
+
+  // 4. Update Product in Database
   const product = await prisma.product.update({
     where: { id: id },
     data: {
@@ -227,6 +275,7 @@ const updateProduct = catchAsync(async (req: Request, res: Response): Promise<vo
       originalPrice: parsedOriginalPrice,
       status: status || "Published",
       image: image.trim(),
+      images: images && Array.isArray(images) ? images.map((img: any) => String(img).trim()) : [image.trim()],
       description: description.trim(),
       brand: brand ? brand.trim() : null,
     },
@@ -238,6 +287,7 @@ const updateProduct = catchAsync(async (req: Request, res: Response): Promise<vo
     data: product,
   });
 });
+
 
 const getCloudinaryPublicId = (imageUrl: string): string | null => {
   if (!imageUrl || !imageUrl.includes("res.cloudinary.com")) {
@@ -260,20 +310,30 @@ const getCloudinaryPublicId = (imageUrl: string): string | null => {
 const deleteProduct = catchAsync(async (req: Request, res: Response): Promise<void> => {
   const id = req.params.id as string;
 
-  // 1. Fetch product to see if there is an image to delete from Cloudinary
+  // 1. Fetch product to see if there are images to delete from Cloudinary
   const product = await prisma.product.findUnique({
     where: { id: id },
   });
 
-  if (product && product.image) {
-    const publicId = getCloudinaryPublicId(product.image);
-    if (publicId) {
-      try {
-        console.log(`Deleting image "${publicId}" from Cloudinary...`);
-        await cloudinary.uploader.destroy(publicId);
-      } catch (cloudinaryError) {
-        // Log error but don't block product deletion if Cloudinary fails
-        console.error("Failed to delete image from Cloudinary:", cloudinaryError);
+  if (product) {
+    const allImages: string[] = [];
+    if (product.image) allImages.push(product.image);
+    if (product.images && Array.isArray(product.images)) {
+      product.images.forEach((img: string) => {
+        if (!allImages.includes(img)) allImages.push(img);
+      });
+    }
+
+    for (const imgUrl of allImages) {
+      const publicId = getCloudinaryPublicId(imgUrl);
+      if (publicId) {
+        try {
+          console.log(`Deleting image "${publicId}" from Cloudinary...`);
+          await cloudinary.uploader.destroy(publicId);
+        } catch (cloudinaryError) {
+          // Log error but don't block product deletion if Cloudinary fails
+          console.error("Failed to delete image from Cloudinary:", cloudinaryError);
+        }
       }
     }
   }
