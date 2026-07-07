@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import catchAsync from "../../utils/catchAsync.js";
 import prisma from "../../db/prisma.js";
 import { createInvoicePDF } from "../../utils/pdfGenerator.js";
-import { sendOrderConfirmationEmail } from "../../utils/emailSender.js";
+import { sendOrderConfirmationEmail, sendOrderCancellationEmails, sendOrderStatusUpdateEmail } from "../../utils/emailSender.js";
 
 const createOrder = catchAsync(async (req: Request, res: Response): Promise<void> => {
   const {
@@ -253,17 +253,33 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
     fulfillmentStatus,
   } = req.body;
 
+  // Retrieve the existing order first
+  const existingOrder = await prisma.order.findUnique({
+    where: { id: id },
+  });
+
+  if (!existingOrder) {
+    res.status(404).json({
+      success: false,
+      message: "Order not found",
+    });
+    return;
+  }
+
   const errors: Record<string, string> = {};
 
-  // Validations
-  if (!customerName || customerName.trim() === "") {
+  // Validations (only if provided, or fallback to existing values)
+  const nameToSave = customerName !== undefined ? customerName : existingOrder.customerName;
+  const emailToSave = customerEmail !== undefined ? customerEmail : existingOrder.customerEmail;
+  const totalToSave = total !== undefined ? parseFloat(total) : existingOrder.total;
+
+  if (!nameToSave || nameToSave.trim() === "") {
     errors.customerName = "Customer name is required.";
   }
-  if (!customerEmail || customerEmail.trim() === "") {
+  if (!emailToSave || emailToSave.trim() === "") {
     errors.customerEmail = "Customer email is required.";
   }
-  const parsedTotal = parseFloat(total);
-  if (isNaN(parsedTotal) || parsedTotal < 0) {
+  if (isNaN(totalToSave) || totalToSave < 0) {
     errors.total = "Total must be a non-negative number.";
   }
 
@@ -278,22 +294,35 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
   }
 
   const updateData: Record<string, any> = {
-    customerName: customerName.trim(),
-    customerEmail: customerEmail.trim(),
-    total: parsedTotal,
-    paymentStatus: paymentStatus || "Pending",
-    fulfillmentStatus: fulfillmentStatus || "Processing",
+    customerName: nameToSave.trim(),
+    customerEmail: emailToSave.trim(),
+    total: totalToSave,
+    paymentStatus: paymentStatus !== undefined ? paymentStatus : existingOrder.paymentStatus,
+    fulfillmentStatus: fulfillmentStatus !== undefined ? fulfillmentStatus : existingOrder.fulfillmentStatus,
   };
 
-  const order = await prisma.order.update({
+  const updatedOrder = await prisma.order.update({
     where: { id: id },
     data: updateData,
   });
 
+  // Check if status has changed
+  if (fulfillmentStatus && fulfillmentStatus !== existingOrder.fulfillmentStatus) {
+    if (fulfillmentStatus === "Canceled") {
+      sendOrderCancellationEmails(updatedOrder).catch((mailErr) => {
+        console.error("Failed to send order cancellation emails:", mailErr);
+      });
+    } else {
+      sendOrderStatusUpdateEmail(updatedOrder, fulfillmentStatus).catch((mailErr) => {
+        console.error("Failed to send order status update email:", mailErr);
+      });
+    }
+  }
+
   res.status(200).json({
     success: true,
     message: "Order updated successfully",
-    data: order,
+    data: updatedOrder,
   });
 });
 

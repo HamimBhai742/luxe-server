@@ -4,6 +4,8 @@ import { getSignupOtpTemplate } from "./templates/signupOtp.js";
 import { getForgotOtpTemplate } from "./templates/forgotOtp.js";
 import { getOrderSuccessTemplate } from "./templates/orderSuccess.js";
 import { getOrderFailedTemplate } from "./templates/orderFailed.js";
+import { getOrderCancelledTemplate } from "./templates/orderCancelled.js";
+import { getOrderStatusUpdateTemplate } from "./templates/orderStatusUpdate.js";
 import { createInvoicePDF } from "./pdfGenerator.js";
 
 const getTransporter = () => {
@@ -131,6 +133,86 @@ export const sendPaymentFailedEmail = async (
     from: `LUXE <${config.smtp.from}>`,
     to: email,
     subject: `Payment Transaction Failed - LUXE`,
+    html,
+  });
+};
+
+export const sendOrderCancellationEmails = async (
+  order: any
+): Promise<void> => {
+  const customerEmail = order.customerEmail.trim();
+  const customerName = order.customerName.trim();
+  
+  const customerHtml = getOrderCancelledTemplate(customerName, order, false);
+  const adminHtml = getOrderCancelledTemplate(customerName, order, true);
+  
+  const transporter = getTransporter();
+  const adminEmail = config.smtp.user || "admin@gmail.com";
+
+  if (!transporter) {
+    console.log("-----------------------------------------");
+    console.log(`[SMTP Not Configured] Outputting Order Cancellation Emails:`);
+    console.log(`To Customer: ${customerEmail}`);
+    console.log(`To Admin: ${adminEmail}`);
+    console.log(`Subject: Order Cancelled - ${order.orderId}`);
+    console.log("-----------------------------------------");
+    return;
+  }
+
+  // Send to Customer
+  await transporter.sendMail({
+    from: `LUXE <${config.smtp.from}>`,
+    to: customerEmail,
+    subject: `Order Cancelled - ${order.orderId}`,
+    html: customerHtml,
+  });
+
+  // Send to Admin
+  await transporter.sendMail({
+    from: `LUXE <${config.smtp.from}>`,
+    to: adminEmail,
+    subject: `ALERT: Order Cancelled - ${order.orderId}`,
+    html: adminHtml,
+  });
+};
+
+export const sendOrderStatusUpdateEmail = async (
+  order: any,
+  status: string
+): Promise<void> => {
+  const email = order.customerEmail.trim();
+  const name = order.customerName.trim();
+  const html = getOrderStatusUpdateTemplate(name, order, status);
+  const transporter = getTransporter();
+
+  let subject = `Order Status Update - ${order.orderId}`;
+  if (status === "Confirmed") {
+    subject = `Order Confirmed - ${order.orderId}`;
+  } else if (status === "Packed") {
+    subject = `Order Packed - ${order.orderId}`;
+  } else if (status === "Shipped") {
+    subject = `Order Shipped - ${order.orderId}`;
+  } else if (status === "Delivered") {
+    subject = `Order Delivered - ${order.orderId}`;
+  } else if (status === "Canceled" || status === "Cancelled") {
+    subject = `Order Cancelled - ${order.orderId}`;
+  } else if (status === "Returned") {
+    subject = `Order Returned - ${order.orderId}`;
+  }
+
+  if (!transporter) {
+    console.log("-----------------------------------------");
+    console.log(`[SMTP Not Configured] Outputting Order Status Update Email:`);
+    console.log(`To: ${email}`);
+    console.log(`Subject: ${subject}`);
+    console.log("-----------------------------------------");
+    return;
+  }
+
+  await transporter.sendMail({
+    from: `LUXE <${config.smtp.from}>`,
+    to: email,
+    subject,
     html,
   });
 };
