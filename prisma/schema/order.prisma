@@ -8,6 +8,12 @@ model Order {
   paymentStatus     String   @default("Pending") // "Paid" | "Pending" | "Refunded"
   paymentMethod     String   @default("card")    // "card" | "bkash" | "cod"
   fulfillmentStatus String   @default("Processing") // "Shipped" | "Processing" | "Delivered" | "Canceled" | "Returned"
+  phone             String?
+  addressLine1      String?
+  addressLine2      String?
+  city              String?
+  state             String?
+  zipCode           String?
   items             Json?
   invoice           Invoice?
   createdAt         DateTime @default(now())

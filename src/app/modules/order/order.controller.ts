@@ -15,6 +15,12 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
     paymentMethod,
     deliveryMethod,
     estimatedDelivery,
+    phone,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    zipCode,
   } = req.body;
 
   const errors: Record<string, string> = {};
@@ -63,6 +69,12 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
       paymentMethod: paymentMethod || "card",
       fulfillmentStatus: fulfillmentStatus || "Processing",
       items: items || null,
+      phone: phone || null,
+      addressLine1: addressLine1 || null,
+      addressLine2: addressLine2 || null,
+      city: city || null,
+      state: state || null,
+      zipCode: zipCode || null,
     },
   });
 
@@ -253,6 +265,12 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
     paymentStatus,
     fulfillmentStatus,
     paymentMethod,
+    phone,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    zipCode,
   } = req.body;
 
   // Retrieve the existing order first
@@ -334,6 +352,12 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
     paymentStatus: paymentStatus !== undefined ? paymentStatus : existingOrder.paymentStatus,
     paymentMethod: paymentMethod !== undefined ? paymentMethod : existingOrder.paymentMethod,
     fulfillmentStatus: fulfillmentStatus !== undefined ? fulfillmentStatus : existingOrder.fulfillmentStatus,
+    phone: phone !== undefined ? phone : existingOrder.phone,
+    addressLine1: addressLine1 !== undefined ? addressLine1 : existingOrder.addressLine1,
+    addressLine2: addressLine2 !== undefined ? addressLine2 : existingOrder.addressLine2,
+    city: city !== undefined ? city : existingOrder.city,
+    state: state !== undefined ? state : existingOrder.state,
+    zipCode: zipCode !== undefined ? zipCode : existingOrder.zipCode,
   };
 
   const updatedOrder = await prisma.order.update({
