@@ -1,0 +1,15 @@
+model Address {
+  id           String   @id @default(uuid())
+  userEmail    String
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  zipCode      String
+  isDefault    Boolean  @default(false)
+  addressType  String   @default("Home")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
