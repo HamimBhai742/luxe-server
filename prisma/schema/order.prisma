@@ -7,6 +7,8 @@ model Order {
   total             Float
   paymentStatus     String   @default("Pending") // "Paid" | "Pending" | "Refunded"
   fulfillmentStatus String   @default("Processing") // "Shipped" | "Processing" | "Delivered" | "Canceled" | "Returned"
+  items             Json?
+  invoice           Invoice?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }

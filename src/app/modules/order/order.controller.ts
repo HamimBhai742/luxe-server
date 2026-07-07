@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
 import catchAsync from "../../utils/catchAsync.js";
 import prisma from "../../db/prisma.js";
+import { createInvoicePDF } from "../../utils/pdfGenerator.js";
+import { sendOrderConfirmationEmail } from "../../utils/emailSender.js";
 
 const createOrder = catchAsync(async (req: Request, res: Response): Promise<void> => {
   const {
@@ -9,6 +11,10 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
     total,
     paymentStatus,
     fulfillmentStatus,
+    items,
+    paymentMethod,
+    deliveryMethod,
+    estimatedDelivery,
   } = req.body;
 
   const errors: Record<string, string> = {};
@@ -55,7 +61,50 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
       total: parsedTotal,
       paymentStatus: paymentStatus || "Pending",
       fulfillmentStatus: fulfillmentStatus || "Processing",
+      items: items || null,
     },
+  });
+
+  // Generate Invoice (Paid for Stripe/bKash, Unpaid for COD)
+  const randomInv = Math.floor(1000 + Math.random() * 9000);
+  const invoiceNumber = `#INV-${randomInv}`;
+
+  await prisma.invoice.create({
+    data: {
+      invoiceNumber,
+      orderId: order.id,
+      amount: parsedTotal,
+      status: paymentStatus === "Paid" ? "Paid" : "Unpaid",
+    },
+  });
+
+  // Log transaction for bKash if not already logged (Stripe logs during payment intent creation)
+  if (paymentStatus === "Paid" && paymentMethod === "bkash") {
+    await prisma.transaction.create({
+      data: {
+        transactionId: `#TRX-${Math.floor(10000 + Math.random() * 90000)}`,
+        date: formattedDate,
+        time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+        customerName: customerName.trim(),
+        customerEmail: customerEmail.trim(),
+        amount: parsedTotal,
+        status: "Succeeded",
+        method: "bKash",
+      },
+    });
+  }
+
+  // Send confirmation email asynchronously (do not block client response)
+  sendOrderConfirmationEmail(
+    customerEmail.trim(),
+    customerName.trim(),
+    order,
+    invoiceNumber,
+    paymentMethod || "Stripe (Card)",
+    deliveryMethod || "standard",
+    estimatedDelivery || "3-5 Days"
+  ).catch((mailErr) => {
+    console.error("Failed to send order confirmation email:", mailErr);
   });
 
   res.status(201).json({
@@ -261,9 +310,50 @@ const deleteOrder = catchAsync(async (req: Request, res: Response): Promise<void
   });
 });
 
+const downloadInvoice = catchAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+
+  const order = await prisma.order.findUnique({
+    where: { id: id as string },
+    include: {
+      invoice: true,
+    },
+  });
+
+  if (!order) {
+    res.status(404).json({
+      success: false,
+      message: "Order not found",
+    });
+    return;
+  }
+
+  let invoice = (order as any).invoice;
+  if (!invoice) {
+    // Generate Invoice dynamically if not exists
+    const randomInv = Math.floor(1000 + Math.random() * 9000);
+    const invoiceNumber = `#INV-${randomInv}`;
+    invoice = await prisma.invoice.create({
+      data: {
+        invoiceNumber,
+        orderId: order.id,
+        amount: order.total,
+        status: order.paymentStatus === "Paid" ? "Paid" : "Unpaid",
+      },
+    });
+  }
+
+  const pdfBuffer = await createInvoicePDF(order, invoice.invoiceNumber);
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
+  res.send(pdfBuffer);
+});
+
 export const OrderController = {
   createOrder,
   getAllOrders,
   updateOrder,
   deleteOrder,
+  downloadInvoice,
 };
