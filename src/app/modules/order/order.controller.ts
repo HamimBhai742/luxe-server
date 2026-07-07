@@ -283,6 +283,38 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
     errors.total = "Total must be a non-negative number.";
   }
 
+  // Sequential order status transition state machine validation
+  if (fulfillmentStatus !== undefined && fulfillmentStatus !== existingOrder.fulfillmentStatus) {
+    const current = existingOrder.fulfillmentStatus;
+    const target = fulfillmentStatus;
+
+    if (current === "Canceled") {
+      errors.fulfillmentStatus = "Order is already cancelled and cannot be updated.";
+    } else if (current === "Returned") {
+      errors.fulfillmentStatus = "Order is already returned and cannot be updated.";
+    } else if (current === "Delivered") {
+      if (target !== "Returned") {
+        errors.fulfillmentStatus = "Delivered orders can only transition to Returned status.";
+      }
+    } else if (current === "Shipped") {
+      if (target !== "Delivered") {
+        errors.fulfillmentStatus = "Shipped orders can only transition to Delivered status.";
+      }
+    } else if (current === "Packed") {
+      if (target !== "Shipped" && target !== "Canceled") {
+        errors.fulfillmentStatus = "Packed orders can only transition to Shipped or Canceled status.";
+      }
+    } else if (current === "Confirmed") {
+      if (target !== "Packed" && target !== "Canceled") {
+        errors.fulfillmentStatus = "Confirmed orders can only transition to Packed or Canceled status.";
+      }
+    } else if (current === "Processing") {
+      if (target !== "Confirmed" && target !== "Canceled") {
+        errors.fulfillmentStatus = "Processing orders can only transition to Confirmed or Canceled status.";
+      }
+    }
+  }
+
   // Return validation error response if any
   if (Object.keys(errors).length > 0) {
     res.status(400).json({
