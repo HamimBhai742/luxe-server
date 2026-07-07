@@ -6,6 +6,7 @@ model Order {
   customerEmail     String
   total             Float
   paymentStatus     String   @default("Pending") // "Paid" | "Pending" | "Refunded"
+  paymentMethod     String   @default("card")    // "card" | "bkash" | "cod"
   fulfillmentStatus String   @default("Processing") // "Shipped" | "Processing" | "Delivered" | "Canceled" | "Returned"
   items             Json?
   invoice           Invoice?

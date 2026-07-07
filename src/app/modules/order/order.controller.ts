@@ -60,6 +60,7 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
       customerEmail: customerEmail.trim(),
       total: parsedTotal,
       paymentStatus: paymentStatus || "Pending",
+      paymentMethod: paymentMethod || "card",
       fulfillmentStatus: fulfillmentStatus || "Processing",
       items: items || null,
     },
@@ -251,6 +252,7 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
     total,
     paymentStatus,
     fulfillmentStatus,
+    paymentMethod,
   } = req.body;
 
   // Retrieve the existing order first
@@ -330,6 +332,7 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
     customerEmail: emailToSave.trim(),
     total: totalToSave,
     paymentStatus: paymentStatus !== undefined ? paymentStatus : existingOrder.paymentStatus,
+    paymentMethod: paymentMethod !== undefined ? paymentMethod : existingOrder.paymentMethod,
     fulfillmentStatus: fulfillmentStatus !== undefined ? fulfillmentStatus : existingOrder.fulfillmentStatus,
   };
 
