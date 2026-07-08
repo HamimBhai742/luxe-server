@@ -12,6 +12,7 @@ import { CartRoutes } from "../modules/cart/cart.routes.js";
 import { PaymentRoutes } from "../modules/payment/payment.routes.js";
 import { AddressRoutes } from "../modules/address/address.routes.js";
 import { ReviewRoutes } from "../modules/review/review.routes.js";
+import { ChatbotRoutes } from "../modules/chatbot/chatbot.routes.js";
 
 export const router = Router();
 
@@ -67,6 +68,10 @@ const routes = [
   {
     path: "/reviews",
     route: ReviewRoutes,
+  },
+  {
+    path: "/chatbot",
+    route: ChatbotRoutes,
   },
 ];
 
