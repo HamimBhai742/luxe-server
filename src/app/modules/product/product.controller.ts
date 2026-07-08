@@ -121,12 +121,33 @@ const createProduct = catchAsync(async (req: Request, res: Response): Promise<vo
 
 const getAllProducts = catchAsync(async (req: Request, res: Response): Promise<void> => {
   const products = await prisma.product.findMany({
+    include: {
+      reviews: {
+        select: {
+          rating: true,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
+  });
+
+  const data = products.map((p) => {
+    const ratingCount = p.reviews.length;
+    const rating = ratingCount > 0
+      ? parseFloat((p.reviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount).toFixed(1))
+      : 5.0;
+
+    const { reviews, ...productData } = p;
+    return {
+      ...productData,
+      rating,
+      ratingCount,
+    };
   });
 
   res.status(200).json({
     success: true,
-    data: products,
+    data,
   });
 });
 
@@ -311,6 +332,20 @@ const getSingleProduct = catchAsync(async (req: Request, res: Response): Promise
   const id = req.params.id as string;
   const product = await prisma.product.findUnique({
     where: { id: id },
+    include: {
+      reviews: {
+        include: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
   });
 
   if (!product) {
@@ -321,9 +356,18 @@ const getSingleProduct = catchAsync(async (req: Request, res: Response): Promise
     return;
   }
 
+  const ratingCount = product.reviews.length;
+  const rating = ratingCount > 0
+    ? parseFloat((product.reviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount).toFixed(1))
+    : 5.0;
+
   res.status(200).json({
     success: true,
-    data: product,
+    data: {
+      ...product,
+      rating,
+      ratingCount,
+    },
   });
 });
 

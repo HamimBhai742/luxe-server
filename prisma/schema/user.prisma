@@ -12,4 +12,5 @@ model User {
   updatedAt  DateTime  @updatedAt
   wishlist   WishlistItem[]
   cartItems  CartItem[]
+  reviews    Review[]
 }
