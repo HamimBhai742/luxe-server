@@ -275,3 +275,65 @@ export const sendSupportTicketEmail = async (
     html,
   });
 };
+
+export const sendTicketStatusUpdateEmail = async (
+  ticket: any,
+  user: any
+): Promise<void> => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+      <h2 style="color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; font-family: Georgia, serif;">SUPPORT TICKET STATUS UPDATE</h2>
+      <p style="font-size: 14px; color: #555; line-height: 1.6;">Hi <strong>${user.name}</strong>,</p>
+      <p style="font-size: 14px; color: #555; line-height: 1.6;">The status of your support ticket <strong>${ticket.ticketId}</strong> has been updated by our support team.</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px;">
+        <tr>
+          <td style="padding: 10px 8px; font-weight: bold; border-bottom: 1px solid #eee; width: 130px; color: #666;">Ticket ID:</td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #eee; font-weight: bold; color: #111;">${ticket.ticketId}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 8px; font-weight: bold; border-bottom: 1px solid #eee; color: #666;">Subject:</td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #eee; color: #111;">${ticket.subject}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 8px; font-weight: bold; border-bottom: 1px solid #eee; color: #666;">Current Status:</td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #eee;">
+            <span style="font-weight: bold; padding: 4px 8px; border-radius: 4px; font-size: 11px; ${
+              ticket.status === "Resolved"
+                ? "background-color: #f3f4f6; color: #374151;"
+                : ticket.status === "In-Progress"
+                ? "background-color: #eff6ff; color: #1d4ed8;"
+                : "background-color: #ecfdf5; color: #047857;"
+            }">
+              ${ticket.status.toUpperCase()}
+            </span>
+          </td>
+        </tr>
+      </table>
+      
+      <p style="font-size: 14px; color: #555; margin-top: 20px; line-height: 1.6;">If you have any further questions, you can check progress or reply to this ticket directly on your dashboard.</p>
+      
+      <div style="margin-top: 30px; text-align: center;">
+        <a href="http://localhost:3000/dashboard/support" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 13px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);">Go to Support Dashboard</a>
+      </div>
+    </div>
+  `;
+
+  const transporter = getTransporter();
+
+  if (!transporter) {
+    console.log("-----------------------------------------");
+    console.log(`[SMTP Not Configured] Ticket Status Update Email:`);
+    console.log(`To Customer: ${user.email}`);
+    console.log(`Subject: [Update] Ticket ${ticket.ticketId} - ${ticket.status}`);
+    console.log("-----------------------------------------");
+    return;
+  }
+
+  await transporter.sendMail({
+    from: `Aura Support <${config.smtp.from}>`,
+    to: user.email,
+    subject: `[Support Update] Ticket ${ticket.ticketId} is now ${ticket.status}`,
+    html,
+  });
+};
