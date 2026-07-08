@@ -1,0 +1,11 @@
+model SupportTicket {
+  id          String   @id @default(uuid())
+  ticketId    String   @unique // e.g., TCK-8924
+  subject     String
+  description String
+  status      String   @default("Open") // "Open" | "In-Progress" | "Resolved"
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

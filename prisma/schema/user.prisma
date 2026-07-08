@@ -13,4 +13,5 @@ model User {
   wishlist   WishlistItem[]
   cartItems  CartItem[]
   reviews    Review[]
+  tickets    SupportTicket[]
 }
