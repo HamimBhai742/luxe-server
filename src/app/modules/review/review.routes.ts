@@ -4,6 +4,9 @@ import auth from "../../middlewares/auth.js";
 
 const router = Router();
 
+// Get user's existing reviews (must be defined before parameter-matching route)
+router.get("/user-reviews", auth, ReviewController.getUserReviews);
+
 // Eligibility check can be called by logged-in users
 router.get("/eligibility/:productId", auth, ReviewController.checkEligibility);
 

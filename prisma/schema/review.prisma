@@ -2,6 +2,7 @@ model Review {
   id        String   @id @default(uuid())
   rating    Int
   comment   String
+  images    String[] @default([])
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId String

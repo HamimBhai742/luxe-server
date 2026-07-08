@@ -84,7 +84,7 @@ const checkEligibility = catchAsync(async (req: Request, res: Response): Promise
 // Submit a new review
 const submitReview = catchAsync(async (req: Request, res: Response): Promise<void> => {
   const user = (req as any).user;
-  const { productId, rating, comment } = req.body;
+  const { productId, rating, comment, images } = req.body;
 
   if (!productId || productId.trim() === "") {
     throw new AppError("Product ID is required.", 400);
@@ -154,6 +154,7 @@ const submitReview = catchAsync(async (req: Request, res: Response): Promise<voi
       comment: comment.trim(),
       userId: user.id,
       productId,
+      images: images || [],
     },
   });
 
@@ -164,7 +165,33 @@ const submitReview = catchAsync(async (req: Request, res: Response): Promise<voi
   });
 });
 
+// Get all reviews written by the logged-in user
+const getUserReviews = catchAsync(async (req: Request, res: Response): Promise<void> => {
+  const user = (req as any).user;
+
+  if (!user) {
+    throw new AppError("Unauthorized access.", 401);
+  }
+
+  const reviews = await prisma.review.findMany({
+    where: { userId: user.id },
+    select: {
+      productId: true,
+      rating: true,
+      comment: true,
+      images: true,
+      createdAt: true,
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    data: reviews,
+  });
+});
+
 export const ReviewController = {
   checkEligibility,
   submitReview,
+  getUserReviews,
 };
