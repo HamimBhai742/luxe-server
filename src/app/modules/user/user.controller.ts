@@ -1,6 +1,16 @@
 import type { Request, Response } from "express";
+import bcryptjs from "bcryptjs";
+import { v2 as cloudinary } from "cloudinary";
+import config from "../../config/index.js";
 import catchAsync from "../../utils/catchAsync.js";
 import prisma from "../../db/prisma.js";
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: config.cloudinary.cloudName,
+  api_key: config.cloudinary.apiKey,
+  api_secret: config.cloudinary.apiSecret,
+});
 
 // Helper to map backend role string to frontend role string
 const mapRoleToFrontend = (role: string): "Admin" | "Customer" | "Seller" => {
@@ -196,9 +206,189 @@ const deleteUser = catchAsync(async (req: Request, res: Response): Promise<void>
   });
 });
 
+const getMyProfile = catchAsync(async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as any).user.id;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
+    return;
+  }
+
+  const responseData = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: mapRoleToFrontend(user.role),
+    phone: user.phone || "",
+    avatarUrl: user.avatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
+    bio: user.bio || "",
+    location: user.location || "",
+    username: user.username || "",
+    website: user.website || "",
+    twitter: user.twitter || "",
+    workspaceStyle: user.workspaceStyle || "Minimalist / Dark",
+  };
+
+  res.status(200).json({
+    success: true,
+    data: responseData,
+  });
+});
+
+const updateMyProfile = catchAsync(async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as any).user.id;
+  const { name, phone, avatarUrl, bio, location, username, website, twitter, workspaceStyle } = req.body;
+
+  if (!name || name.trim() === "") {
+    res.status(400).json({
+      success: false,
+      message: "Name is required.",
+    });
+    return;
+  }
+
+  if (username && username.trim() !== "") {
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        username: username.trim(),
+        NOT: { id: userId },
+      },
+    });
+    if (existingUser) {
+      res.status(400).json({
+        success: false,
+        message: "Username is already in use.",
+      });
+      return;
+    }
+  }
+
+  let finalAvatarUrl = avatarUrl;
+  if (avatarUrl && avatarUrl.startsWith("data:image/")) {
+    try {
+      if (config.cloudinary.cloudName && config.cloudinary.apiKey && config.cloudinary.apiSecret) {
+        const uploadResponse = await cloudinary.uploader.upload(avatarUrl, {
+          folder: "luxe_profiles",
+        });
+        finalAvatarUrl = uploadResponse.secure_url;
+      }
+    } catch (err: any) {
+      console.error("Profile avatar Cloudinary upload failed:", err);
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      name: name.trim(),
+      phone: phone ? phone.trim() : null,
+      avatarUrl: finalAvatarUrl ? finalAvatarUrl.trim() : null,
+      bio: bio ? bio.trim() : null,
+      location: location ? location.trim() : null,
+      username: username ? username.trim() : null,
+      website: website ? website.trim() : null,
+      twitter: twitter ? twitter.trim() : null,
+      workspaceStyle: workspaceStyle ? workspaceStyle.trim() : null,
+    },
+  });
+
+  const responseData = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: mapRoleToFrontend(user.role),
+    phone: user.phone || "",
+    avatarUrl: user.avatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
+    bio: user.bio || "",
+    location: user.location || "",
+    username: user.username || "",
+    website: user.website || "",
+    twitter: user.twitter || "",
+    workspaceStyle: user.workspaceStyle || "Minimalist / Dark",
+  };
+
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully",
+    data: responseData,
+  });
+});
+
+const changeMyPassword = catchAsync(async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as any).user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    res.status(400).json({
+      success: false,
+      message: "Current password and new password are required.",
+    });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: "User not found.",
+    });
+    return;
+  }
+
+  if (!user.password) {
+    res.status(400).json({
+      success: false,
+      message: "This account does not have a password configured (social login).",
+    });
+    return;
+  }
+
+  const isPasswordValid = await bcryptjs.compare(currentPassword, user.password);
+  if (!isPasswordValid) {
+    res.status(400).json({
+      success: false,
+      message: "Incorrect current password.",
+    });
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    res.status(400).json({
+      success: false,
+      message: "New password must be at least 6 characters long.",
+    });
+    return;
+  }
+
+  const hashedPassword = await bcryptjs.hash(newPassword, 10);
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Password updated successfully.",
+  });
+});
+
 export const UserController = {
   createUser,
   getAllUsers,
   updateUser,
   deleteUser,
+  getMyProfile,
+  updateMyProfile,
+  changeMyPassword,
 };

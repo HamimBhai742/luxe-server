@@ -8,10 +8,18 @@ model User {
   isVerified Boolean   @default(false)
   otp        String?
   otpExpiry  DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  wishlist   WishlistItem[]
-  cartItems  CartItem[]
-  reviews    Review[]
-  tickets    SupportTicket[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  phone          String?
+  avatarUrl      String?
+  bio            String?
+  location       String?
+  username       String?
+  website        String?
+  twitter        String?
+  workspaceStyle String?
+  wishlist       WishlistItem[]
+  cartItems      CartItem[]
+  reviews        Review[]
+  tickets        SupportTicket[]
 }
