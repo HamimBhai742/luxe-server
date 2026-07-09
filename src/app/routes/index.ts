@@ -14,6 +14,7 @@ import { AddressRoutes } from "../modules/address/address.routes.js";
 import { ReviewRoutes } from "../modules/review/review.routes.js";
 import { ChatbotRoutes } from "../modules/chatbot/chatbot.routes.js";
 import { SupportRoutes } from "../modules/support/support.routes.js";
+import { FaqRoutes } from "../modules/faq/faq.routes.js";
 
 export const router = Router();
 
@@ -77,6 +78,10 @@ const routes = [
   {
     path: "/support",
     route: SupportRoutes,
+  },
+  {
+    path: "/faqs",
+    route: FaqRoutes,
   },
 ];
 
