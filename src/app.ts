@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import helmet from "helmet";
+import * as helmet from "helmet";
 import morgan from "morgan";
 import config from "./app/config/index.js";
 import notFoundHandler from "./app/middlewares/notFoundHandler.js";
@@ -10,7 +10,7 @@ import { router } from "./app/routes/index.js";
 const app = express();
 
 // Security headers
-app.use(helmet());
+app.use(helmet.default());
 
 // CORS configuration
 app.use(
