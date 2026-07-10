@@ -97,9 +97,38 @@ const createUser = catchAsync(async (req: Request, res: Response): Promise<void>
 });
 
 const getAllUsers = catchAsync(async (req: Request, res: Response): Promise<void> => {
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-  });
+  const { page = 1, limit = 10, search = "", role = "All" } = req.query;
+
+  const parsedPage = Math.max(1, parseInt(page as string, 10));
+  const parsedLimit = Math.max(1, parseInt(limit as string, 10));
+  const skip = (parsedPage - 1) * parsedLimit;
+
+  const where: any = {};
+
+  // Search filter
+  if (search) {
+    const term = String(search).trim();
+    where.OR = [
+      { name: { contains: term, mode: "insensitive" } },
+      { email: { contains: term, mode: "insensitive" } },
+    ];
+  }
+
+  // Role filter
+  if (role && role !== "All") {
+    const backendRole = mapRoleToBackend(role as string);
+    where.role = backendRole;
+  }
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: parsedLimit,
+    }),
+    prisma.user.count({ where }),
+  ]);
 
   const formattedUsers = users.map((user) => ({
     id: user.id,
@@ -118,6 +147,12 @@ const getAllUsers = catchAsync(async (req: Request, res: Response): Promise<void
   res.status(200).json({
     success: true,
     data: formattedUsers,
+    meta: {
+      total,
+      page: parsedPage,
+      limit: parsedLimit,
+      totalPages: Math.ceil(total / parsedLimit),
+    },
   });
 });
 
