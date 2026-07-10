@@ -165,7 +165,7 @@ const deleteCoupon = catchAsync(async (req: Request, res: Response): Promise<voi
 });
 
 const validateCoupon = catchAsync(async (req: Request, res: Response): Promise<void> => {
-  const { code } = req.body;
+  const { code, email } = req.body;
 
   if (!code || code.trim() === "") {
     res.status(400).json({
@@ -193,6 +193,24 @@ const validateCoupon = catchAsync(async (req: Request, res: Response): Promise<v
       message: "Coupon code is inactive.",
     });
     return;
+  }
+
+  // Check if user has already used this coupon code in a previous order
+  if (email && typeof email === "string" && email.trim() !== "") {
+    const existingOrderWithCoupon = await prisma.order.findFirst({
+      where: {
+        customerEmail: email.trim(),
+        couponCode: coupon.code,
+      },
+    });
+
+    if (existingOrderWithCoupon) {
+      res.status(400).json({
+        success: false,
+        message: "You have already redeemed this coupon.",
+      });
+      return;
+    }
   }
 
   // Check usage thresholds

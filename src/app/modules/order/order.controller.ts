@@ -21,6 +21,7 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
     city,
     state,
     zipCode,
+    couponCode,
   } = req.body;
 
   const errors: Record<string, string> = {};
@@ -35,6 +36,21 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
   const parsedTotal = parseFloat(total);
   if (isNaN(parsedTotal) || parsedTotal < 0) {
     errors.total = "Total must be a non-negative number.";
+  }
+
+  // Verify coupon is not used multiple times by this user
+  if (couponCode && typeof couponCode === "string" && couponCode.trim() !== "") {
+    const codeUpper = couponCode.trim().toUpperCase();
+    const existingOrderWithCoupon = await prisma.order.findFirst({
+      where: {
+        customerEmail: customerEmail.trim(),
+        couponCode: codeUpper,
+      },
+    });
+
+    if (existingOrderWithCoupon) {
+      errors.coupon = "You have already redeemed this coupon.";
+    }
   }
 
   // Return validation error response if any
@@ -75,6 +91,7 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
       city: city || null,
       state: state || null,
       zipCode: zipCode || null,
+      couponCode: couponCode || null,
     },
   });
 
@@ -105,6 +122,27 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
         method: "bKash",
       },
     });
+  }
+
+  // Increment coupon usage if coupon code was used
+  if (couponCode && typeof couponCode === "string" && couponCode.trim() !== "") {
+    try {
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: couponCode.trim().toUpperCase() },
+      });
+      if (coupon) {
+        await prisma.coupon.update({
+          where: { id: coupon.id },
+          data: {
+            usageUsed: {
+              increment: 1,
+            },
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Failed to update coupon usage count:", err);
+    }
   }
 
   // Send confirmation email asynchronously (do not block client response)
