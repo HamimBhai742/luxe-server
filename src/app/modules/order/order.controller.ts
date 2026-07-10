@@ -63,9 +63,10 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
     return;
   }
 
-  // Generate a random order number
-  const randomId = Math.floor(1000 + Math.random() * 9000);
-  const orderId = `#AUR-${randomId}`;
+  // Generate sequential order number based on total count of existing orders
+  const orderCount = await prisma.order.count();
+  const nextOrderNum = (orderCount + 1).toString().padStart(3, "0");
+  const orderId = `ORD-${nextOrderNum}`;
 
   // Formatted date string to match client presentation
   const formattedDate = new Date().toLocaleDateString("en-US", {
@@ -95,9 +96,10 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
     },
   });
 
-  // Generate Invoice (Paid for Stripe/bKash, Unpaid for COD)
-  const randomInv = Math.floor(1000 + Math.random() * 9000);
-  const invoiceNumber = `#INV-${randomInv}`;
+  // Generate sequential invoice number based on total count of existing invoices
+  const invoiceCount = await prisma.invoice.count();
+  const nextInvNum = (invoiceCount + 1).toString().padStart(3, "0");
+  const invoiceNumber = `INV-${nextInvNum}`;
 
   await prisma.invoice.create({
     data: {
@@ -177,7 +179,7 @@ const getAllOrders = catchAsync(async (req: Request, res: Response): Promise<voi
     // Seed default orders to keep UI populated on first load
     const defaultOrders = [
       {
-        orderId: "#AUR-9921",
+        orderId: "ORD-001",
         date: "Oct 24, 2024",
         customerName: "Alex Thompson",
         customerEmail: "alex.t@example.com",
@@ -187,7 +189,7 @@ const getAllOrders = catchAsync(async (req: Request, res: Response): Promise<voi
         createdAt: new Date("2024-10-24T12:00:00Z")
       },
       {
-        orderId: "#AUR-9920",
+        orderId: "ORD-002",
         date: "Oct 23, 2024",
         customerName: "Sarah Jenkins",
         customerEmail: "s.jenkins@provider.net",
@@ -197,7 +199,7 @@ const getAllOrders = catchAsync(async (req: Request, res: Response): Promise<voi
         createdAt: new Date("2024-10-23T12:00:00Z")
       },
       {
-        orderId: "#AUR-9919",
+        orderId: "ORD-003",
         date: "Oct 22, 2024",
         customerName: "Michael Chen",
         customerEmail: "m.chen@example.com",
@@ -207,7 +209,7 @@ const getAllOrders = catchAsync(async (req: Request, res: Response): Promise<voi
         createdAt: new Date("2024-10-22T12:00:00Z")
       },
       {
-        orderId: "#AUR-9918",
+        orderId: "ORD-004",
         date: "Oct 21, 2024",
         customerName: "Emily Davis",
         customerEmail: "emily.d@provider.net",
@@ -217,7 +219,7 @@ const getAllOrders = catchAsync(async (req: Request, res: Response): Promise<voi
         createdAt: new Date("2024-10-21T12:00:00Z")
       },
       {
-        orderId: "#AUR-9917",
+        orderId: "ORD-005",
         date: "Oct 20, 2024",
         customerName: "James Wilson",
         customerEmail: "j.wilson@tech.com",
@@ -456,9 +458,10 @@ const downloadInvoice = catchAsync(async (req: Request, res: Response): Promise<
 
   let invoice = (order as any).invoice;
   if (!invoice) {
-    // Generate Invoice dynamically if not exists
-    const randomInv = Math.floor(1000 + Math.random() * 9000);
-    const invoiceNumber = `#INV-${randomInv}`;
+    // Generate sequential invoice number dynamically if not exists
+    const invoiceCount = await prisma.invoice.count();
+    const nextInvNum = (invoiceCount + 1).toString().padStart(3, "0");
+    const invoiceNumber = `INV-${nextInvNum}`;
     invoice = await prisma.invoice.create({
       data: {
         invoiceNumber,
