@@ -2,9 +2,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci
 COPY tsconfig.json ./
-COPY prisma ./prisma
 COPY src ./src
 RUN npm run build
 # Prune node_modules to remove devDependencies while keeping production Prisma engines
