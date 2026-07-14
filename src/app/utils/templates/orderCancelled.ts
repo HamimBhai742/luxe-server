@@ -55,7 +55,7 @@ export const getOrderCancelledTemplate = (
   const paymentDisplay = order.paymentMethod === "card" 
     ? "Stripe (Card)" 
     : order.paymentMethod === "bkash" 
-      ? "bKash" 
+      ? "Mobile Banking (QR Scan)" 
       : "Cash on Delivery";
 
   const titleText = isAdmin ? "Notification: Order Cancelled" : "Order Cancellation Confirmation";

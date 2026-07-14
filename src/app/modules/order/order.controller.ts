@@ -22,6 +22,7 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
     state,
     zipCode,
     couponCode,
+    transactionId,
   } = req.body;
 
   const errors: Record<string, string> = {};
@@ -93,6 +94,7 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
       state: state || null,
       zipCode: zipCode || null,
       couponCode: couponCode || null,
+      transactionId: transactionId || null,
     },
   });
 
@@ -311,6 +313,7 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
     city,
     state,
     zipCode,
+    transactionId,
   } = req.body;
 
   // Retrieve the existing order first
@@ -398,6 +401,7 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
     city: city !== undefined ? city : existingOrder.city,
     state: state !== undefined ? state : existingOrder.state,
     zipCode: zipCode !== undefined ? zipCode : existingOrder.zipCode,
+    transactionId: transactionId !== undefined ? transactionId : existingOrder.transactionId,
   };
 
   const updatedOrder = await prisma.order.update({

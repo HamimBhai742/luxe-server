@@ -220,7 +220,7 @@ export const getOrderSuccessTemplate = (
             </div>
             <div class="meta-row">
               <span class="meta-label">Payment Method:</span>
-              <span class="meta-value">${paymentMethod === "card" ? "Stripe (Card)" : paymentMethod === "bkash" ? "bKash" : paymentMethod === "cod" ? "Cash on Delivery" : paymentMethod}</span>
+              <span class="meta-value">${paymentMethod === "card" ? "Stripe (Card)" : paymentMethod === "bkash" ? "Mobile Banking (QR Scan)" : paymentMethod === "cod" ? "Cash on Delivery" : paymentMethod}</span>
             </div>
             <div class="meta-row">
               <span class="meta-label">Delivery Type:</span>

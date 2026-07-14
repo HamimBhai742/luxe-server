@@ -55,7 +55,7 @@ export const getOrderStatusUpdateTemplate = (
   const paymentDisplay = order.paymentMethod === "card" 
     ? "Stripe (Card)" 
     : order.paymentMethod === "bkash" 
-      ? "bKash" 
+      ? "Mobile Banking (QR Scan)" 
       : "Cash on Delivery";
 
   // Customize description copy based on status

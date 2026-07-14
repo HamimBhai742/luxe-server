@@ -15,6 +15,7 @@ model Order {
   state             String?
   zipCode           String?
   couponCode        String?
+  transactionId     String?
   items             Json?
   invoice           Invoice?
   createdAt         DateTime @default(now())
