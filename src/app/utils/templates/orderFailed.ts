@@ -119,7 +119,7 @@ export const getOrderFailedTemplate = (
             <div class="error-title">Decline Reason / Error Details:</div>
             <div class="error-msg">${errorMessage}</div>
             <div style="margin-top: 12px; font-size: 13px; color: #7f1d1d;">
-              <strong>Attempted Amount:</strong> $${amount.toFixed(2)}
+              <strong>Attempted Amount:</strong> ৳${amount.toFixed(2)}
             </div>
           </div>
 

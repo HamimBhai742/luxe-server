@@ -20,8 +20,8 @@ export const getOrderSuccessTemplate = (
           Order Package / Aura Premium Purchase
         </td>
         <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: center; color: #334155;">1</td>
-        <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: right; color: #334155;">$${order.total.toFixed(2)}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: right; font-weight: bold; color: #1e293b;">$${order.total.toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: right; color: #334155;">৳${order.total.toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: right; font-weight: bold; color: #1e293b;">৳${order.total.toFixed(2)}</td>
       </tr>
     `;
   } else {
@@ -41,8 +41,8 @@ export const getOrderSuccessTemplate = (
             ${specs}
           </td>
           <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: center; color: #334155;">${qty}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: right; color: #334155;">$${price.toFixed(2)}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: right; font-weight: bold; color: #1e293b;">$${total.toFixed(2)}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: right; color: #334155;">৳${price.toFixed(2)}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #eef2f6; font-size: 14px; text-align: right; font-weight: bold; color: #1e293b;">৳${total.toFixed(2)}</td>
         </tr>
       `;
     });
@@ -255,21 +255,21 @@ export const getOrderSuccessTemplate = (
           <table class="summary-table">
             <tr class="summary-row">
               <td style="color: #64748b; font-weight: bold;">Subtotal:</td>
-              <td style="text-align: right; font-weight: bold; color: #0f172a;">$${subtotal.toFixed(2)}</td>
+              <td style="text-align: right; font-weight: bold; color: #0f172a;">৳${subtotal.toFixed(2)}</td>
             </tr>
             <tr class="summary-row">
               <td style="color: #64748b; font-weight: bold;">Tax (8%):</td>
-              <td style="text-align: right; font-weight: bold; color: #0f172a;">$${tax.toFixed(2)}</td>
+              <td style="text-align: right; font-weight: bold; color: #0f172a;">৳${tax.toFixed(2)}</td>
             </tr>
             ${delivery > 0 ? `
             <tr class="summary-row">
               <td style="color: #64748b; font-weight: bold;">Delivery Fee:</td>
-              <td style="text-align: right; font-weight: bold; color: #0f172a;">$${delivery.toFixed(2)}</td>
+              <td style="text-align: right; font-weight: bold; color: #0f172a;">৳${delivery.toFixed(2)}</td>
             </tr>
             ` : ""}
             <tr class="summary-row">
               <td class="grand-total">Grand Total:</td>
-              <td class="grand-total" style="text-align: right;">$${Number(order.total).toFixed(2)}</td>
+              <td class="grand-total" style="text-align: right;">৳${Number(order.total).toFixed(2)}</td>
             </tr>
           </table>
 
