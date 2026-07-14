@@ -338,6 +338,7 @@ const getSingleProduct = catchAsync(async (req: Request, res: Response): Promise
           user: {
             select: {
               name: true,
+              email: true,
             },
           },
         },
@@ -356,6 +357,46 @@ const getSingleProduct = catchAsync(async (req: Request, res: Response): Promise
     return;
   }
 
+  const reviewsWithVerification = await Promise.all(
+    product.reviews.map(async (review) => {
+      // Query all delivered orders for the review author's email
+      const orders = await prisma.order.findMany({
+        where: {
+          customerEmail: review.user.email,
+          fulfillmentStatus: "Delivered",
+        },
+      });
+
+      let isVerifiedBuyer = false;
+      for (const order of orders) {
+        const items = order.items
+          ? typeof order.items === "string"
+            ? JSON.parse(order.items)
+            : (order.items as any[])
+          : [];
+        if (items.some((item: any) => String(item.id || item.productId) === String(product.id))) {
+          isVerifiedBuyer = true;
+          break;
+        }
+      }
+
+      return {
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        images: review.images,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+        userId: review.userId,
+        productId: review.productId,
+        user: {
+          name: review.user.name,
+        },
+        isVerifiedBuyer,
+      };
+    })
+  );
+
   const ratingCount = product.reviews.length;
   const rating = ratingCount > 0
     ? parseFloat((product.reviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount).toFixed(1))
@@ -365,6 +406,7 @@ const getSingleProduct = catchAsync(async (req: Request, res: Response): Promise
     success: true,
     data: {
       ...product,
+      reviews: reviewsWithVerification,
       rating,
       ratingCount,
     },
