@@ -98,6 +98,16 @@ const createOrder = catchAsync(async (req: Request, res: Response): Promise<void
     },
   });
 
+  // Create admin push notification for new order
+  await prisma.notification.create({
+    data: {
+      title: "New Order Received",
+      message: `Order ${orderId} has been placed by ${customerName.trim()} for ৳${parsedTotal.toLocaleString()}`,
+      type: "new_order",
+      isRead: false,
+    },
+  }).catch((err) => console.error("Failed to create new order notification:", err));
+
   // Generate sequential invoice number based on total count of existing invoices
   const invoiceCount = await prisma.invoice.count();
   const nextInvNum = (invoiceCount + 1).toString().padStart(3, "0");
@@ -412,6 +422,16 @@ const updateOrder = catchAsync(async (req: Request, res: Response): Promise<void
   // Check if status has changed
   if (fulfillmentStatus && fulfillmentStatus !== existingOrder.fulfillmentStatus) {
     if (fulfillmentStatus === "Canceled") {
+      // Create admin notification for cancelled order
+      await prisma.notification.create({
+        data: {
+          title: "Order Cancelled",
+          message: `Order ${updatedOrder.orderId} has been cancelled.`,
+          type: "cancelled_order",
+          isRead: false,
+        },
+      }).catch((err) => console.error("Failed to create cancellation notification:", err));
+
       sendOrderCancellationEmails(updatedOrder).catch((mailErr) => {
         console.error("Failed to send order cancellation emails:", mailErr);
       });

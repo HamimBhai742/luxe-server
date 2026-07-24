@@ -15,6 +15,7 @@ import { ReviewRoutes } from "../modules/review/review.routes.js";
 import { ChatbotRoutes } from "../modules/chatbot/chatbot.routes.js";
 import { SupportRoutes } from "../modules/support/support.routes.js";
 import { FaqRoutes } from "../modules/faq/faq.routes.js";
+import { NotificationRoutes } from "../modules/notification/notification.routes.js";
 
 export const router = Router();
 
@@ -82,6 +83,10 @@ const routes = [
   {
     path: "/faqs",
     route: FaqRoutes,
+  },
+  {
+    path: "/notifications",
+    route: NotificationRoutes,
   },
 ];
 
